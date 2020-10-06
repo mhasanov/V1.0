@@ -13,7 +13,7 @@ class sqlTranslate(object):
         """
 
         """
-        self.connection = self.create_connection("localhost", "root", "*********", "sw_app")
+        self.connection = self.create_connection("localhost", "root", "*******", "sw_app")
 
     def create_connection(self, host_name, user_name, user_password, db_name):
         """
@@ -70,6 +70,14 @@ class sqlTranslate(object):
         except Error as e:
             print(f"The error '{e}' occurred")
 
+    def read_user_hash(self, user : str):
+        """
+        """
+        query = """SELECT PWD_hash
+                   FROM users
+                   WHERE name = '%s';""" % (user)
+        return self.execute_read_query(query)
+
     def read_all(self, table : str):
         """
         Returns all the data in the specified table
@@ -107,7 +115,7 @@ class sqlTranslate(object):
         Removes specified table from database
         @param name: name of thable to be removed
         """
-        execute_query("DROP TABLE %s;" % (name))
+        self.execute_query("DROP TABLE %s;" % (name))
 
     def drop_column(self, tname: str, cname: str):
         """
@@ -115,17 +123,18 @@ class sqlTranslate(object):
         @param tnaem: name of table
         @param cname: name of column to be removed
         """
-        execute_query("ALTER TABLE %s DROP COLUMN %s;" % (tname, cname))
+        self.execute_query("ALTER TABLE %s DROP COLUMN %s;" % (tname, cname))
 
     def add_column(self, tname: str, cname: str, type: str):
         """
         Adds column/field to specified table
         @param tnaem: name of table
         @param cname: name of column to be added
+        @param type: type of data in column
         """
-        execute_query("ALTER TABLE %s ADD %s %s;" % (tname, cname, type))
+        self.execute_query("ALTER TABLE %s ADD %s %s;" % (tname, cname, type))
 
-    def delete_record(self, tname: str, field: str, valaue: str):
+    def delete_record(self, tname: str, field: str, value: str):
         """
         Deletes recors
         @param tnaem: name of table
@@ -133,34 +142,55 @@ class sqlTranslate(object):
         @param valaue: value at which record should be delted
         """
         delete_comment = "DELETE FROM %s WHERE %s = %s" % (tname, field, value)
-        execute_query(delete_comment)
+        self.execute_query(delete_comment)
 
     def update_entrie(self, tname: str, fields: list, entriedata : list, local : str, localvalue : str):
         """
-        
+        @param tname:   table name
+        @param fields:  
+        @param entriedata:
+        @param local:
+        @param localvalue:
         """
         update_post_description = "UPDATE %s SET %s = %s" % (tname, fields, entriedata)
         update_post_description = update_post_description + " WHERE %s = %s" % (local, localvalue)
-        execute_query(update_post_description)
+        self.execute_query(update_post_description)
 
+    def add_user(self, name: str, hash: str):
+        # TODO: fix id incrementation
+        self.insert_data("users", [name, hash], ["name", "PWD_hash"])
 
-        ######################UNFINISHED
-    def isert_data(self, tname: str, fields: list, entriedata : list):
+    def insert_data(self, tname: str, entriedata : list, fields: list = list()):
+        """
+        @param tname:   table name
+        @param entriedata: data to be entred
+        @param fields: OPTIONAL fields to which data is to be assigned
+        """
+        fieldstring = ""
+
+        if (fields):
+            fieldstring = " ("
+            fieldstring = fieldstring + ', '.join(fields)
+            fieldstring = fieldstring + ") "
         values = ""
         for i in entriedata:
-            if (values == ""):
+            if (values != ""):
                 values = values + ", "
-            values = values + i
-        execute_query("INSERT INTO %s %s VALUES(%s);" % (tname, values))
+            if (isinstance(i, str)):
+                values = values + "'"
+                values = values + i
+                values = values + "'"
+            else:
+               values = values + str(i)
 
-"""
-INSERT INTO
-  `users` (`name`, `age`, `gender`, `nationality`)
-VALUES
-  ('James', 25, 'male', 'USA'),
-  ('Leila', 32, 'female', 'France'),
-  ('Brigitte', 35, 'female', 'England'),
-  ('Mike', 40, 'male', 'Denmark'),
-  ('Elizabeth', 21, 'female', 'Canada');
-"""
-#######################################UNFINISHED
+        print("INSERT INTO %s%s VALUES(%s);" % (tname, fieldstring, values))
+        self.execute_query("INSERT INTO %s%s VALUES(%s);" % (tname, fieldstring, values))
+
+#INSERT INTO
+#  `users` (`name`, `age`, `gender`, `nationality`)
+#VALUES
+#  ('James', 25, 'male', 'USA'),
+#  ('Leila', 32, 'female', 'France'),
+#  ('Brigitte', 35, 'female', 'England'),
+#  ('Mike', 40, 'male', 'Denmark'),
+#  ('Elizabeth', 21, 'female', 'Canada');
