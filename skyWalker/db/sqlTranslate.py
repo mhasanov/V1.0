@@ -13,7 +13,7 @@ class sqlTranslate(object):
         """
 
         """
-        self.connection = self.create_connection("localhost", "root", "*******", "sw_app")
+        self.connection = self.create_connection("localhost", "root", "*****", "sw_app")
 
     def create_connection(self, host_name, user_name, user_password, db_name):
         """
